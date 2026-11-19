@@ -1,0 +1,27 @@
+name: FORMA temporary Netlify deploy
+on:
+  push:
+    branches:
+      - feature/my-coach-fitness-tracker
+    paths:
+      - fitness-coach/**
+      - .github/workflows/forma-preview.yml
+  workflow_dispatch:
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Deploy temporary public preview
+        run: |
+          npx --yes netlify-cli@23.11.0 deploy --allow-anonymous --prod --dir=fitness-coach --json > forma-deploy.json
+          cat forma-deploy.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forma-deploy-result
+          path: forma-deploy.json
