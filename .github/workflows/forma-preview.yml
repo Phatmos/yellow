@@ -7,6 +7,8 @@ on:
       - fitness-coach/**
       - .github/workflows/forma-preview.yml
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -16,10 +18,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Deploy temporary public preview
+      - name: Deploy temporary Netlify site
+        id: deploy
+        shell: bash
         run: |
-          npx --yes netlify-cli@23.11.0 deploy --allow-anonymous --prod --dir=fitness-coach --json > forma-deploy.json
-          cat forma-deploy.json
+          npx --yes netlify-cli@23.11.0 deploy --allow-anonymous --prod --dir=fitness-coach --json | tee forma-deploy.json
+      - name: Save live deployment details to repository
+        if: success()
+        shell: bash
+        run: |
+          cp forma-deploy.json fitness-coach/netlify-deploy.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add fitness-coach/netlify-deploy.json
+          git commit -m "Record temporary FORMA preview URL [skip ci]" || exit 0
+          git push
       - uses: actions/upload-artifact@v4
         if: always()
         with:
